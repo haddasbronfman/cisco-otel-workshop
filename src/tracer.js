@@ -3,13 +3,14 @@ const { registerInstrumentations } = require('@opentelemetry/instrumentation');
 const { NodeTracerProvider } = require('@opentelemetry/sdk-trace-node');
 const { SimpleSpanProcessor} = require('@opentelemetry/sdk-trace-base');
 const { diag, DiagConsoleLogger, DiagLogLevel } = require('@opentelemetry/api');
-const { ZipkinExporter } = require('@opentelemetry/exporter-zipkin');
 const { Resource } = require('@opentelemetry/resources');
 const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventions');
+const { OTLPTraceExporter } = require("@opentelemetry/exporter-trace-otlp-grpc");
+
 
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
 
-// 1. create trace provider.
+// 1. create tracer provider.
 const provider = new NodeTracerProvider({
   resource: new Resource({
     [SemanticResourceAttributes.SERVICE_NAME]: 'Haddas-application'
@@ -17,14 +18,16 @@ const provider = new NodeTracerProvider({
 });
 
 // 2. create exporter
-const exporter = new ZipkinExporter();
-// Other options: OTLPTraceExporter(), JaegerExporter(), ConsoleSpanExporter()
+const exporter = new OTLPTraceExporter({
+    url: 'http://3.92.199.248:4317'
+});
+// Other options: JaegerExporter(), ZipkinExporter(), ConsoleSpanExporter()
 
-// 3. create processor. give it out exporter:
+// 3. create processor. give it our exporter:
 const processor = new SimpleSpanProcessor(exporter);
 // Other options: BatchSpanProcessor()
 
-// 4. add processor to provider
+// 4. export spans to opentelemetry collector
 provider.addSpanProcessor(processor);
 
 // 5. choose what we want to instrument
